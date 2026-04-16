@@ -1,0 +1,100 @@
+name: Cross-compile John for Windows
+
+on:
+  push:
+    branches: [ "main", "master", "bleeding-jumbo" ]
+  pull_request:
+    branches: [ "main", "master", "bleeding-jumbo" ]
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  build-windows:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout John the Ripper source
+        uses: actions/checkout@v4
+        with:
+          repository: openwall/john
+          ref: bleeding-jumbo  # 使用最新的开发分支
+
+      - name: Install MinGW-w64 and cross-compile dependencies
+        run: |
+          sudo apt-get update
+          # MinGW-w64 交叉编译工具链
+          sudo apt-get install -y \
+            gcc-mingw-w64-x86-64 \
+            g++-mingw-w64-x86-64 \
+            mingw-w64-x86-64-dev
+          
+          # 额外依赖库的开发包
+          sudo apt-get install -y \
+            libssl-dev \
+            libbz2-dev \
+            libgmp-dev \
+            zlib1g-dev
+
+      - name: Configure for Windows cross-compilation
+        working-directory: ./src
+        run: |
+          # 设置交叉编译目标
+          ./configure \
+            --host=x86_64-w64-mingw32 \
+            --target=x86_64-w64-mingw32 \
+            --build=x86_64-linux-gnu \
+            CPPFLAGS="-I/usr/x86_64-w64-mingw32/include" \
+            LDFLAGS="-L/usr/x86_64-w64-mingw32/lib" \
+            --disable-openmp  # MinGW 对 OpenMP 支持有限，可先禁用
+
+      - name: Build John the Ripper
+        working-directory: ./src
+        run: |
+          make -s clean
+          make -sj$(nproc)
+
+      - name: Collect Windows binaries and dependencies
+        run: |
+          mkdir -p john-windows-x64
+          
+          # 复制生成的可执行文件
+          cp -v run/*.exe john-windows-x64/ 2>/dev/null || true
+          
+          # 复制配置文件和字典文件
+          cp -v run/*.conf john-windows-x64/ 2>/dev/null || true
+          cp -v run/*.chr john-windows-x64/ 2>/dev/null || true
+          cp -v run/password.lst john-windows-x64/ 2>/dev/null || true
+          cp -v run/*.pl john-windows-x64/ 2>/dev/null || true
+          cp -v run/*.py john-windows-x64/ 2>/dev/null || true
+          
+          # 复制子目录
+          cp -r run/rules john-windows-x64/ 2>/dev/null || true
+          cp -r run/ztex john-windows-x64/ 2>/dev/null || true
+          
+          # 复制 MinGW 运行时库
+          cp -v /usr/x86_64-w64-mingw32/lib/libwinpthread-1.dll john-windows-x64/ 2>/dev/null || true
+          
+          # 可选：检查 DLL 依赖（需要 mingw-64-tools）
+          sudo apt-get install -y binutils-mingw-w64-x86-64
+          echo "=== DLL Dependencies for john.exe ==="
+          x86_64-w64-mingw32-objdump -p john-windows-x64/john.exe | grep "DLL Name" || true
+
+      - name: Package as ZIP
+        run: |
+          zip -r john-windows-x64.zip john-windows-x64/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: john-windows-x64
+          path: john-windows-x64.zip
+
+      - name: Display build summary
+        run: |
+          echo "========================================"
+          echo "Build completed successfully!"
+          echo "========================================"
+          echo "Windows binaries are located in: john-windows-x64/"
+          echo "Main executable: john-windows-x64/john.exe"
+          echo ""
+          echo "To test the build, run:"
+          echo "  cd john-windows-x64 && ./john.exe --test=0"
+          echo "========================================"
