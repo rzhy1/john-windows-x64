@@ -52,6 +52,7 @@ jobs:
           
           echo "zlib cross-compiled successfully"
           echo "查找opencl.a"
+          find / -name "libOpenCL.a"
           ls /usr/x86_64-w64-mingw32/lib/libOpenCL.a
 
       - name: Cross-compile libbz2 for Windows
@@ -116,7 +117,7 @@ jobs:
               LDFLAGS="-static -static-libgcc -static-libstdc++ -flto=auto -Wl,--gc-sections -s \
               -L/usr/local/mingw-openssl/lib -L/usr/local/mingw-zlib/lib -L/usr/local/mingw-bzip2/lib -L/usr/x86_64-w64-mingw32/lib" \
               \
-              LIBS="-lssl -lcrypto -lws2_32 -lcrypt32  -lwinpthread" \
+              LIBS="-lssl -lcrypto -lz -lbz2 -lOpenCL -lws2_32 -lcrypt32 -lwinpthread" \
               \
               --disable-native-tests \
               --enable-opencl
