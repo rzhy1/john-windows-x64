@@ -57,81 +57,59 @@ jobs:
           sudo cp OpenCL-Headers-main/CL/*.h /usr/x86_64-w64-mingw32/include/CL/
       
           # 2. 创建 OpenCL 导入库 (.def 文件)
-          echo "LIBRARY OpenCL.dll" > opencl.def
-          echo "EXPORTS" >> opencl.def
-          
-          # 平台 / 设备
-          echo "clGetPlatformIDs" >> opencl.def
-          echo "clGetPlatformInfo" >> opencl.def
-          echo "clGetDeviceIDs" >> opencl.def
-          echo "clGetDeviceInfo" >> opencl.def
-          
-          # 上下文
-          echo "clCreateContext" >> opencl.def
-          echo "clCreateContextFromType" >> opencl.def
-          echo "clRetainContext" >> opencl.def
-          echo "clReleaseContext" >> opencl.def
-          
-          # 命令队列
-          echo "clCreateCommandQueue" >> opencl.def
-          echo "clCreateCommandQueueWithProperties" >> opencl.def
-          echo "clRetainCommandQueue" >> opencl.def
-          echo "clReleaseCommandQueue" >> opencl.def
-          
-          # 内存对象
-          echo "clCreateBuffer" >> opencl.def
-          echo "clCreateImage" >> opencl.def
-          echo "clRetainMemObject" >> opencl.def
-          echo "clReleaseMemObject" >> opencl.def
-          echo "clGetMemObjectInfo" >> opencl.def
-          
-          # 程序
-          echo "clCreateProgramWithSource" >> opencl.def
-          echo "clCreateProgramWithBinary" >> opencl.def
-          echo "clBuildProgram" >> opencl.def
-          echo "clCompileProgram" >> opencl.def
-          echo "clLinkProgram" >> opencl.def
-          echo "clRetainProgram" >> opencl.def
-          echo "clReleaseProgram" >> opencl.def
-          echo "clGetProgramInfo" >> opencl.def
-          echo "clGetProgramBuildInfo" >> opencl.def
-          
-          # Kernel
-          echo "clCreateKernel" >> opencl.def
-          echo "clCreateKernelsInProgram" >> opencl.def
-          echo "clSetKernelArg" >> opencl.def
-          echo "clRetainKernel" >> opencl.def
-          echo "clReleaseKernel" >> opencl.def
-          echo "clGetKernelInfo" >> opencl.def
-          
-          # 执行
-          echo "clEnqueueNDRangeKernel" >> opencl.def
-          echo "clEnqueueTask" >> opencl.def
-          
-          # 内存操作
-          echo "clEnqueueReadBuffer" >> opencl.def
-          echo "clEnqueueWriteBuffer" >> opencl.def
-          echo "clEnqueueCopyBuffer" >> opencl.def
-          echo "clEnqueueMapBuffer" >> opencl.def
-          echo "clEnqueueUnmapMemObject" >> opencl.def
-          
-          # 同步
-          echo "clFlush" >> opencl.def
-          echo "clFinish" >> opencl.def
-          
-          # 事件
-          echo "clWaitForEvents" >> opencl.def
-          echo "clGetEventInfo" >> opencl.def
-          echo "clCreateUserEvent" >> opencl.def
-          echo "clSetUserEventStatus" >> opencl.def
-          echo "clReleaseEvent" >> opencl.def
-          
-          # Profiling
-          echo "clGetEventProfilingInfo" >> opencl.def
-          
-          # 扩展
-          echo "clGetExtensionFunctionAddress" >> opencl.def
-          echo "clGetExtensionFunctionAddressForPlatform" >> opencl.def
+          cat > opencl.def << 'EOF'
+          LIBRARY OpenCL.dll
+          EXPORTS
+          clGetPlatformIDs
+          clGetPlatformInfo
+          clGetDeviceIDs
+          clGetDeviceInfo
+          clCreateContext
+          clCreateContextFromType
+          clRetainContext
+          clReleaseContext
+          clCreateCommandQueue
+          clCreateCommandQueueWithProperties
+          clRetainCommandQueue
+          clReleaseCommandQueue
+          clCreateBuffer
+          clCreateImage
+          clRetainMemObject
+          clReleaseMemObject
+          clGetMemObjectInfo
+          clCreateProgramWithSource
+          clCreateProgramWithBinary
+          clBuildProgram
+          clCompileProgram
+          clLinkProgram
+          clRetainProgram
+          clReleaseProgram
+          clGetProgramInfo
+          clGetProgramBuildInfo
+          clCreateKernel
+          clCreateKernelsInProgram
+          clSetKernelArg
+          clRetainKernel
+          clReleaseKernel
+          clGetKernelInfo
+          clEnqueueNDRangeKernel
+          clEnqueueTask
+          clEnqueueReadBuffer
+          clEnqueueWriteBuffer
+          clEnqueueCopyBuffer
+          clEnqueueMapBuffer
+          clEnqueueUnmapMemObject
+          clFlush
+          clFinish
+          clWaitForEvents
+          clGetEventInfo
+          clCreateUserEvent
+          clSetUserEventStatus
+          clReleaseEvent
+          clGetEventProfilingInfo
+          clGetExtensionFunctionAddress
+          clGetExtensionFunctionAddressForPlatform
+          EOF
       
           # 3. 生成静态导入库 libOpenCL.a
           x86_64-w64-mingw32-dlltool -d opencl.def -l libOpenCL.a
@@ -139,6 +117,7 @@ jobs:
           sudo cp libOpenCL.a /usr/x86_64-w64-mingw32/lib/
           echo "OpenCL installed to MinGW standard path"
           ls -la /usr/x86_64-w64-mingw32/lib/libOpenCL.a
+        
       - name: Cross-compile libbz2 for Windows
         run: |
           wget -q https://sourceware.org/pub/bzip2/bzip2-1.0.8.tar.gz
@@ -226,6 +205,8 @@ jobs:
           
           # 复制可执行文件
           cp -v run/*.exe john-windows-x64/run/ 2>/dev/null || true
+          cp -v run/*.pl john-windows-x64/run/ 2>/dev/null || true
+          cp -v run/*.py john-windows-x64/run/ 2>/dev/null || true
           
           # 复制配置文件
           cp -v run/*.conf john-windows-x64/run/ 2>/dev/null || true
