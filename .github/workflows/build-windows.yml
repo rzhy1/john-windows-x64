@@ -59,23 +59,79 @@ jobs:
           # 2. 创建 OpenCL 导入库 (.def 文件)
           echo "LIBRARY OpenCL.dll" > opencl.def
           echo "EXPORTS" >> opencl.def
+          
+          # 平台 / 设备
           echo "clGetPlatformIDs" >> opencl.def
+          echo "clGetPlatformInfo" >> opencl.def
           echo "clGetDeviceIDs" >> opencl.def
+          echo "clGetDeviceInfo" >> opencl.def
+          
+          # 上下文
           echo "clCreateContext" >> opencl.def
+          echo "clCreateContextFromType" >> opencl.def
+          echo "clRetainContext" >> opencl.def
+          echo "clReleaseContext" >> opencl.def
+          
+          # 命令队列
           echo "clCreateCommandQueue" >> opencl.def
+          echo "clCreateCommandQueueWithProperties" >> opencl.def
+          echo "clRetainCommandQueue" >> opencl.def
+          echo "clReleaseCommandQueue" >> opencl.def
+          
+          # 内存对象
           echo "clCreateBuffer" >> opencl.def
+          echo "clCreateImage" >> opencl.def
+          echo "clRetainMemObject" >> opencl.def
+          echo "clReleaseMemObject" >> opencl.def
+          echo "clGetMemObjectInfo" >> opencl.def
+          
+          # 程序
           echo "clCreateProgramWithSource" >> opencl.def
+          echo "clCreateProgramWithBinary" >> opencl.def
           echo "clBuildProgram" >> opencl.def
+          echo "clCompileProgram" >> opencl.def
+          echo "clLinkProgram" >> opencl.def
+          echo "clRetainProgram" >> opencl.def
+          echo "clReleaseProgram" >> opencl.def
+          echo "clGetProgramInfo" >> opencl.def
+          echo "clGetProgramBuildInfo" >> opencl.def
+          
+          # Kernel
           echo "clCreateKernel" >> opencl.def
+          echo "clCreateKernelsInProgram" >> opencl.def
+          echo "clSetKernelArg" >> opencl.def
+          echo "clRetainKernel" >> opencl.def
+          echo "clReleaseKernel" >> opencl.def
+          echo "clGetKernelInfo" >> opencl.def
+          
+          # 执行
           echo "clEnqueueNDRangeKernel" >> opencl.def
+          echo "clEnqueueTask" >> opencl.def
+          
+          # 内存操作
           echo "clEnqueueReadBuffer" >> opencl.def
           echo "clEnqueueWriteBuffer" >> opencl.def
+          echo "clEnqueueCopyBuffer" >> opencl.def
+          echo "clEnqueueMapBuffer" >> opencl.def
+          echo "clEnqueueUnmapMemObject" >> opencl.def
+          
+          # 同步
+          echo "clFlush" >> opencl.def
           echo "clFinish" >> opencl.def
-          echo "clReleaseKernel" >> opencl.def
-          echo "clReleaseProgram" >> opencl.def
-          echo "clReleaseCommandQueue" >> opencl.def
-          echo "clReleaseContext" >> opencl.def
-          echo "clReleaseMemObject" >> opencl.def
+          
+          # 事件
+          echo "clWaitForEvents" >> opencl.def
+          echo "clGetEventInfo" >> opencl.def
+          echo "clCreateUserEvent" >> opencl.def
+          echo "clSetUserEventStatus" >> opencl.def
+          echo "clReleaseEvent" >> opencl.def
+          
+          # Profiling
+          echo "clGetEventProfilingInfo" >> opencl.def
+          
+          # 扩展
+          echo "clGetExtensionFunctionAddress" >> opencl.def
+          echo "clGetExtensionFunctionAddressForPlatform" >> opencl.def
       
           # 3. 生成静态导入库 libOpenCL.a
           x86_64-w64-mingw32-dlltool -d opencl.def -l libOpenCL.a
@@ -138,21 +194,19 @@ jobs:
                         -I/usr/local/mingw-zlib/include \
                         -I/usr/local/mingw-bzip2/include \
                         -I/usr/x86_64-w64-mingw32/include" \
-              CFLAGS="-O2 -g0 -ffunction-sections -fdata-sections -flto" \
+              CFLAGS="-O2 -g0 -ffunction-sections -fdata-sections" \
               LDFLAGS="-static \
                        -static-libgcc \
                        -static-libstdc++ \
-                       -flto \
                        -Wl,--gc-sections \
                        -Wl,--strip-all \
                        -L/usr/local/mingw-openssl/lib \
                        -L/usr/local/mingw-zlib/lib \
                        -L/usr/local/mingw-bzip2/lib \
                        -L/usr/x86_64-w64-mingw32/lib" \
-              LIBS="-lssl -lcrypto -lz -lbz2 -lOpenCL -lws2_32 -lgdi32 -lcrypt32 -lcfgmgr32" \
+              LIBS="-lOpenCL -lssl -lcrypto -lz -lbz2 -lws2_32 -lgdi32 -lcrypt32 -lcfgmgr32"" \
               --disable-native-tests \
-              --enable-opencl \
-              --disable-openmp
+              --enable-opencl
           
           echo ""
           echo "=== Configuration Summary ==="
