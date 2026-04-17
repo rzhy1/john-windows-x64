@@ -129,26 +129,35 @@ jobs:
       - name: Configure for John the Ripper
         working-directory: ./src
         run: |
-          # 明确指定 OpenSSL 路径
           ./configure \
               --host=x86_64-w64-mingw32 \
-              --target=x86_64-w64-mingw32 \
               --build=x86_64-linux-gnu \
-              \
               CC=x86_64-w64-mingw32-gcc \
               CXX=x86_64-w64-mingw32-g++ \
-              \
-              CPPFLAGS="-I/usr/local/mingw-openssl/include -I/usr/local/mingw-zlib/include -I/usr/local/mingw-bzip2/include -I/usr/x86_64-w64-mingw32/include" \
-              \
-              CFLAGS="-O2 -ffunction-sections -fdata-sections -flto -DPTW32_STATIC_LIB" \
-              \
-              LDFLAGS="-static -static-libgcc -static-libstdc++ -flto=auto -Wl,--gc-sections -s \
-              -L/usr/local/mingw-openssl/lib -L/usr/local/mingw-zlib/lib -L/usr/local/mingw-bzip2/lib -L/usr/x86_64-w64-mingw32/lib" \
-              \
-              LIBS="-lssl -lcrypto -lz -lbz2 -lOpenCL -lws2_32 -lcrypt32 -lwinpthread" \
-              \
+              CPPFLAGS="-I/usr/local/mingw-openssl/include \
+                        -I/usr/local/mingw-zlib/include \
+                        -I/usr/local/mingw-bzip2/include \
+                        -I/usr/x86_64-w64-mingw32/include" \
+              CFLAGS="-O2 -g0 -ffunction-sections -fdata-sections -flto" \
+              LDFLAGS="-static \
+                       -static-libgcc \
+                       -static-libstdc++ \
+                       -flto \
+                       -Wl,--gc-sections \
+                       -Wl,--strip-all \
+                       -L/usr/local/mingw-openssl/lib \
+                       -L/usr/local/mingw-zlib/lib \
+                       -L/usr/local/mingw-bzip2/lib \
+                       -L/usr/x86_64-w64-mingw32/lib" \
+              LIBS="-lssl -lcrypto -lz -lbz2 -lOpenCL -lws2_32 -lgdi32 -lcrypt32 -lcfgmgr32" \
               --disable-native-tests \
-              --enable-opencl
+              --enable-opencl \
+              --disable-openmp
+          
+          echo ""
+          echo "=== Configuration Summary ==="
+          grep -E "(OpenCL|HAVE_OPENCL)" autoconfig.h 2>/dev/null || echo "OpenCL not found in autoconfig.h"
+        shell: /usr/bin/bash -e {0}
 
       - name: Build John the Ripper
         working-directory: ./src
