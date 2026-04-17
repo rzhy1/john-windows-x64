@@ -189,11 +189,12 @@ jobs:
         working-directory: ./src
         run: |
           ./configure \
+              ac_cv_header_dlfcn_h=no \
               --host=x86_64-w64-mingw32 \
               --build=x86_64-linux-gnu \
               CC=x86_64-w64-mingw32-gcc \
               CXX=x86_64-w64-mingw32-g++ \
-              CPPFLAGS="-D_WIN32 -DNO_DL \
+              CPPFLAGS="-D_WIN32 \
                         -I/usr/local/mingw-openssl/include \
                         -I/usr/local/mingw-zlib/include \
                         -I/usr/local/mingw-bzip2/include \
