@@ -51,10 +51,47 @@ jobs:
           sudo cp libz.a /usr/local/mingw-zlib/lib/
           
           echo "zlib cross-compiled successfully"
-          echo "查找opencl.a"
-          sudo find / -name "libOpenCL.a"
-          ls /usr/x86_64-w64-mingw32/lib/libOpenCL.a
 
+
+      - name: Ensure OpenCL (libOpenCL.a)
+        run: |
+          set -e
+      
+          echo "=== Checking libOpenCL.a ==="
+          if [ -f /usr/x86_64-w64-mingw32/lib/libOpenCL.a ]; then
+            echo "✔ libOpenCL.a already exists"
+            exit 0
+          fi
+      
+          echo "❌ libOpenCL.a not found, building..."
+      
+          sudo apt-get update
+          sudo apt-get install -y cmake mingw-w64
+      
+          # 下载 OpenCL ICD Loader
+          wget -q https://github.com/KhronosGroup/OpenCL-ICD-Loader/archive/refs/heads/main.tar.gz
+          tar -xzf main.tar.gz
+          cd OpenCL-ICD-Loader-main
+      
+          mkdir build && cd build
+      
+          # 交叉编译 Windows 版 OpenCL loader
+          cmake .. \
+            -DCMAKE_SYSTEM_NAME=Windows \
+            -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
+            -DCMAKE_RC_COMPILER=x86_64-w64-mingw32-windres \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DOPENCL_ICD_LOADER_HEADERS_DIR=../inc
+      
+          make -j$(nproc)
+      
+          # 安装到 MinGW 路径
+          sudo cp libOpenCL.a /usr/x86_64-w64-mingw32/lib/
+      
+          sudo mkdir -p /usr/x86_64-w64-mingw32/include/CL
+          sudo cp ../inc/CL/*.h /usr/x86_64-w64-mingw32/include/CL/
+      
+          echo "✔ OpenCL (libOpenCL.a) installed"
       - name: Cross-compile libbz2 for Windows
         run: |
           wget -q https://sourceware.org/pub/bzip2/bzip2-1.0.8.tar.gz
