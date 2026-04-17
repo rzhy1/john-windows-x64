@@ -186,11 +186,6 @@ jobs:
               LIBS="-lOpenCL -lssl -lcrypto -lz -lbz2 -lws2_32 -lgdi32 -lcrypt32 -lcfgmgr32"" \
               --disable-native-tests \
               --enable-opencl
-          
-          echo ""
-          echo "=== Configuration Summary ==="
-          grep -E "(OpenCL|HAVE_OPENCL)" autoconfig.h 2>/dev/null || echo "OpenCL not found in autoconfig.h"
-        shell: /usr/bin/bash -e {0}
 
       - name: Build John the Ripper
         working-directory: ./src
