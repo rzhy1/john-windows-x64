@@ -207,7 +207,7 @@ jobs:
                        -L/usr/local/mingw-zlib/lib \
                        -L/usr/local/mingw-bzip2/lib \
                        -L/usr/x86_64-w64-mingw32/lib" \
-              LIBS="-lOpenCL -lssl -lcrypto -lz -lbz2 -lws2_32 -lgdi32 -lcrypt32 -lcfgmgr32"" \
+              LIBS="-lOpenCL -lwinpthread -lssl -lcrypto -lz -lbz2 -lws2_32 -lgdi32 -lcrypt32 -lcfgmgr32" \
               --disable-native-tests \
               --enable-opencl
 
