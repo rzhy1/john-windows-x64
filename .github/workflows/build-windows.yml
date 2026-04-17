@@ -9,7 +9,7 @@ on:
 
 jobs:
   build-windows:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout John the Ripper source
         uses: actions/checkout@v6
@@ -34,7 +34,7 @@ jobs:
 
       - name: Download and install MinGW OpenSSL
         run: |
-          wget -q -O- https://github.com/openssl/openssl/releases/download/openssl-4.0.0/openssl-4.0.0.tar.gz | tar xz
+          wget -q -O- https://github.com/openssl/openssl/releases/download/OpenSSL_1_1_1w/openssl-1.1.1w.tar.gz | tar xz
           cd openssl-* || exit
           ./Configure mingw64 \
             --prefix=/usr/local/mingw-openssl \
@@ -73,7 +73,7 @@ jobs:
               CFLAGS="-O2 -ffunction-sections -fdata-sections -flto -DPTW32_STATIC_LIB" \
               \
               LDFLAGS="-static -static-libgcc -static-libstdc++ -flto -Wl,--gc-sections -s \
-            -L/usr/local/mingw-openssl/lib -L/usr/x86_64-w64-mingw32/lib" \
+              -L/usr/local/mingw-openssl/lib -L/usr/x86_64-w64-mingw32/lib" \
               \
               LIBS="-lssl -lcrypto -lws2_32 -lcrypt32" \
               \
