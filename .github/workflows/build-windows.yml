@@ -188,6 +188,8 @@ jobs:
       - name: Configure for John the Ripper
         working-directory: ./src
         run: |
+          sed -i 's/<dlfcn.h>/"Win32-dlfcn-port.h"/g' opencl_dynamic_loader.c
+          sed -i 's/fchdir([^)]*)/(-1)/g' opencl_common.c
           export ac_cv_header_dlfcn_h=no
           export ac_cv_func_dlopen=no
           export ac_cv_func_fchdir=no
@@ -218,11 +220,6 @@ jobs:
         working-directory: ./src
         run: |
           make -s clean
-          if [ -f opencl_dynamic_loader.c ]; then
-            rm -f opencl_dynamic_loader.c
-            echo "Removed opencl_dynamic_loader.c"
-          fi
-          rm -f opencl_dynamic_loader.o 2>/dev/null || true
           make -sj$(nproc)
           x86_64-w64-mingw32-strip ../run/*.exe
 
