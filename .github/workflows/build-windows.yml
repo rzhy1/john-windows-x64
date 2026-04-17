@@ -111,7 +111,7 @@ jobs:
           cp -r doc john-windows-x64/ 2>/dev/null || true
           
           # 复制 OpenSSL DLL（运行时需要）
-          cp -v /usr/local/mingw-openssl/bin/*.dll john-windows-x64/ 2>/dev/null || true
+          cp -v /usr/local/mingw-openssl/bin/*.dll john-windows-x64/run/ 2>/dev/null || true
           
           # 复制 MinGW 运行时库
           cp -v /usr/x86_64-w64-mingw32/lib/libwinpthread-1.dll john-windows-x64/ 2>/dev/null || true
