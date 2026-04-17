@@ -53,8 +53,8 @@ jobs:
           # 1. 下载 Khronos 官方的 OpenCL 头文件
           wget -q https://github.com/KhronosGroup/OpenCL-Headers/archive/refs/heads/main.zip
           unzip -q main.zip
-          sudo mkdir -p /usr/local/mingw-openssl/include/CL
-          sudo cp OpenCL-Headers-main/CL/*.h /usr/local/mingw-openssl/include/CL/
+          sudo mkdir -p /usr/x86_64-w64-mingw32/include/CL
+          sudo cp OpenCL-Headers-main/CL/*.h /usr/x86_64-w64-mingw32/include/CL/
       
           # 2. 创建 OpenCL 导入库 (.def 文件)
           echo "LIBRARY OpenCL.dll" > opencl.def
@@ -79,8 +79,10 @@ jobs:
       
           # 3. 生成静态导入库 libOpenCL.a
           x86_64-w64-mingw32-dlltool -d opencl.def -l libOpenCL.a
-          sudo cp libOpenCL.a /usr/local/mingw-openssl/lib/
-          echo "OpenCL headers and import library installed."
+          sudo mkdir -p /usr/x86_64-w64-mingw32/lib/
+          sudo cp libOpenCL.a /usr/x86_64-w64-mingw32/lib/
+          echo "OpenCL installed to MinGW standard path"
+          ls -la /usr/x86_64-w64-mingw32/lib/libOpenCL.a
       - name: Cross-compile libbz2 for Windows
         run: |
           wget -q https://sourceware.org/pub/bzip2/bzip2-1.0.8.tar.gz
