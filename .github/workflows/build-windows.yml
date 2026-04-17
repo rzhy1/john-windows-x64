@@ -52,7 +52,7 @@ jobs:
           
           echo "zlib cross-compiled successfully"
           echo "查找opencl.a"
-          find / -name "libOpenCL.a"
+          sudo find / -name "libOpenCL.a"
           ls /usr/x86_64-w64-mingw32/lib/libOpenCL.a
 
       - name: Cross-compile libbz2 for Windows
