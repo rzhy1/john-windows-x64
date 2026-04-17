@@ -188,14 +188,12 @@ jobs:
       - name: Configure for John the Ripper
         working-directory: ./src
         run: |
-          export ac_cv_header_dlfcn_h=no
-          export ac_cv_func_fork=yes
           ./configure \
               --host=x86_64-w64-mingw32 \
               --build=x86_64-linux-gnu \
               CC=x86_64-w64-mingw32-gcc \
               CXX=x86_64-w64-mingw32-g++ \
-              CPPFLAGS="-D_WIN32 \
+              CPPFLAGS="-D_WIN32 -DHAVE_DLFCN_H=0 -DHAVE_FCHDIR=0 \
                         -I/usr/local/mingw-openssl/include \
                         -I/usr/local/mingw-zlib/include \
                         -I/usr/local/mingw-bzip2/include \
