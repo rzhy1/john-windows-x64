@@ -34,16 +34,15 @@ jobs:
 
       - name: Download and install MinGW OpenSSL
         run: |
-          wget -q -O- https://github.com/openssl/openssl/releases/download/OpenSSL_1_1_1w/openssl-1.1.1w.tar.gz | tar xz
-          cd openssl-* || exit
+          wget -q https://github.com/openssl/openssl/releases/download/OpenSSL_1_1_1w/openssl-1.1.1w.tar.gz
+          tar -xzf openssl-1.1.1w.tar.gz
+          cd openssl-1.1.1w
           ./Configure mingw64 \
             --prefix=/usr/local/mingw-openssl \
             --cross-compile-prefix=x86_64-w64-mingw32- \
              no-shared \
              no-tests \
              no-dso \
-             no-module \
-             no-engine \
              -static \
             --openssldir=/usr/local/mingw-openssl/ssl
           make -j$(nproc)
