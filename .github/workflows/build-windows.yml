@@ -135,7 +135,7 @@ jobs:
           echo ""
           echo "=== Required DLLs ==="
           sudo apt-get install -y binutils-mingw-w64-x86-64
-          x86_64-w64-mingw32-objdump -p john-windows-x64/john.exe | grep "DLL Name" || true
+          x86_64-w64-mingw32-objdump -p john-windows-x64/run/john.exe | grep "DLL Name" || true
 
       - name: Create Release
         if: github.event_name == 'workflow_dispatch'
