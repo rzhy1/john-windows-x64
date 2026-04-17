@@ -27,11 +27,7 @@ jobs:
             libbz2-dev \
             libgmp-dev \
             zlib1g-dev \
-            pkg-config \
-            mingw-w64 \
-            ocl-icd-opencl-dev \
-            opencl-headers \
-            pocl-opencl-icd
+            pkg-config 
 
       - name: Cross-compile zlib for Windows
         run: |
@@ -72,7 +68,9 @@ jobs:
           wget -q https://github.com/KhronosGroup/OpenCL-ICD-Loader/archive/refs/heads/main.tar.gz
           tar -xzf main.tar.gz
           cd OpenCL-ICD-Loader-main
-      
+          export C_INCLUDE_PATH=
+          export CPLUS_INCLUDE_PATH=
+
           mkdir build && cd build
       
           # 交叉编译 Windows 版 OpenCL loader
@@ -80,12 +78,10 @@ jobs:
             -DCMAKE_SYSTEM_NAME=Windows \
             -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
             -DCMAKE_RC_COMPILER=x86_64-w64-mingw32-windres \
-            -DCMAKE_FIND_ROOT_PATH=/usr/x86_64-w64-mingw32 \
-            -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY \
-            -DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY \
             -DBUILD_SHARED_LIBS=OFF \
             -DBUILD_TESTING=OFF \
-            -DOPENCL_ICD_LOADER_HEADERS_DIR=../inc
+            -DOPENCL_ICD_LOADER_HEADERS_DIR=../inc \
+            -DCMAKE_C_FLAGS="-I$(pwd)/../inc"
       
           make -j$(nproc)
       
