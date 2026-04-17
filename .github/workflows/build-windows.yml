@@ -74,9 +74,10 @@ jobs:
               LDFLAGS="-static -static-libgcc -static-libstdc++ -flto -Wl,--gc-sections -s \
               -L/usr/local/mingw-openssl/lib -L/usr/x86_64-w64-mingw32/lib" \
               \
-              LIBS="-lssl -lcrypto -lws2_32 -lcrypt32" \
+              LIBS="-lssl -lcrypto -lws2_32 -lcrypt32  -lpthread" \
               \
               --disable-native-tests \
+              --disable-openmp \
               --enable-opencl \
               --disable-shared
 
@@ -125,7 +126,7 @@ jobs:
       - name: Verify build
         run: |
           echo "=== Checking if john.exe was built ==="
-          ls -la john-windows-x64/john.exe
+          ls -la john-windows-x64/run/john.exe
           echo ""
           echo "=== Required DLLs ==="
           sudo apt-get install -y binutils-mingw-w64-x86-64
