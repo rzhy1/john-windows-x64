@@ -57,59 +57,83 @@ jobs:
           sudo cp OpenCL-Headers-main/CL/*.h /usr/x86_64-w64-mingw32/include/CL/
       
           # 2. 创建 OpenCL 导入库 (.def 文件)
-          cat > opencl.def << 'EOF'
-          LIBRARY OpenCL.dll
-          EXPORTS
-          clGetPlatformIDs
-          clGetPlatformInfo
-          clGetDeviceIDs
-          clGetDeviceInfo
-          clCreateContext
-          clCreateContextFromType
-          clRetainContext
-          clReleaseContext
-          clCreateCommandQueue
-          clCreateCommandQueueWithProperties
-          clRetainCommandQueue
-          clReleaseCommandQueue
-          clCreateBuffer
-          clCreateImage
-          clRetainMemObject
-          clReleaseMemObject
-          clGetMemObjectInfo
-          clCreateProgramWithSource
-          clCreateProgramWithBinary
-          clBuildProgram
-          clCompileProgram
-          clLinkProgram
-          clRetainProgram
-          clReleaseProgram
-          clGetProgramInfo
-          clGetProgramBuildInfo
-          clCreateKernel
-          clCreateKernelsInProgram
-          clSetKernelArg
-          clRetainKernel
-          clReleaseKernel
-          clGetKernelInfo
-          clEnqueueNDRangeKernel
-          clEnqueueTask
-          clEnqueueReadBuffer
-          clEnqueueWriteBuffer
-          clEnqueueCopyBuffer
-          clEnqueueMapBuffer
-          clEnqueueUnmapMemObject
-          clFlush
-          clFinish
-          clWaitForEvents
-          clGetEventInfo
-          clCreateUserEvent
-          clSetUserEventStatus
-          clReleaseEvent
-          clGetEventProfilingInfo
-          clGetExtensionFunctionAddress
-          clGetExtensionFunctionAddressForPlatform
-          EOF
+          : > opencl.def
+
+          printf '%s\n' "LIBRARY OpenCL.dll" >> opencl.def
+          printf '%s\n' "EXPORTS" >> opencl.def
+          
+          # 平台 / 设备
+          printf '%s\n' "clGetPlatformIDs" >> opencl.def
+          printf '%s\n' "clGetPlatformInfo" >> opencl.def
+          printf '%s\n' "clGetDeviceIDs" >> opencl.def
+          printf '%s\n' "clGetDeviceInfo" >> opencl.def
+          
+          # 上下文
+          printf '%s\n' "clCreateContext" >> opencl.def
+          printf '%s\n' "clCreateContextFromType" >> opencl.def
+          printf '%s\n' "clRetainContext" >> opencl.def
+          printf '%s\n' "clReleaseContext" >> opencl.def
+          
+          # 命令队列
+          printf '%s\n' "clCreateCommandQueue" >> opencl.def
+          printf '%s\n' "clCreateCommandQueueWithProperties" >> opencl.def
+          printf '%s\n' "clRetainCommandQueue" >> opencl.def
+          printf '%s\n' "clReleaseCommandQueue" >> opencl.def
+          
+          # 内存
+          printf '%s\n' "clCreateBuffer" >> opencl.def
+          printf '%s\n' "clCreateImage" >> opencl.def
+          printf '%s\n' "clRetainMemObject" >> opencl.def
+          printf '%s\n' "clReleaseMemObject" >> opencl.def
+          printf '%s\n' "clGetMemObjectInfo" >> opencl.def
+          
+          # Program
+          printf '%s\n' "clCreateProgramWithSource" >> opencl.def
+          printf '%s\n' "clCreateProgramWithBinary" >> opencl.def
+          printf '%s\n' "clBuildProgram" >> opencl.def
+          printf '%s\n' "clCompileProgram" >> opencl.def
+          printf '%s\n' "clLinkProgram" >> opencl.def
+          printf '%s\n' "clRetainProgram" >> opencl.def
+          printf '%s\n' "clReleaseProgram" >> opencl.def
+          printf '%s\n' "clGetProgramInfo" >> opencl.def
+          printf '%s\n' "clGetProgramBuildInfo" >> opencl.def
+          
+          # Kernel
+          printf '%s\n' "clCreateKernel" >> opencl.def
+          printf '%s\n' "clCreateKernelsInProgram" >> opencl.def
+          printf '%s\n' "clSetKernelArg" >> opencl.def
+          printf '%s\n' "clRetainKernel" >> opencl.def
+          printf '%s\n' "clReleaseKernel" >> opencl.def
+          printf '%s\n' "clGetKernelInfo" >> opencl.def
+          
+          # 执行
+          printf '%s\n' "clEnqueueNDRangeKernel" >> opencl.def
+          printf '%s\n' "clEnqueueTask" >> opencl.def
+          
+          # Buffer 操作
+          printf '%s\n' "clEnqueueReadBuffer" >> opencl.def
+          printf '%s\n' "clEnqueueWriteBuffer" >> opencl.def
+          printf '%s\n' "clEnqueueCopyBuffer" >> opencl.def
+          printf '%s\n' "clEnqueueMapBuffer" >> opencl.def
+          printf '%s\n' "clEnqueueUnmapMemObject" >> opencl.def
+          
+          # 同步
+          printf '%s\n' "clFlush" >> opencl.def
+          printf '%s\n' "clFinish" >> opencl.def
+          
+          # 事件
+          printf '%s\n' "clWaitForEvents" >> opencl.def
+          printf '%s\n' "clGetEventInfo" >> opencl.def
+          printf '%s\n' "clCreateUserEvent" >> opencl.def
+          printf '%s\n' "clSetUserEventStatus" >> opencl.def
+          printf '%s\n' "clReleaseEvent" >> opencl.def
+          
+          # Profiling
+          printf '%s\n' "clGetEventProfilingInfo" >> opencl.def
+          
+          # 扩展
+          printf '%s\n' "clGetExtensionFunctionAddress" >> opencl.def
+          printf '%s\n' "clGetExtensionFunctionAddressForPlatform" >> opencl.def
       
           # 3. 生成静态导入库 libOpenCL.a
           x86_64-w64-mingw32-dlltool -d opencl.def -l libOpenCL.a
