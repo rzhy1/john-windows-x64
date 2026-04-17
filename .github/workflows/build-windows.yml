@@ -23,7 +23,6 @@ jobs:
           sudo apt-get install -y \
             gcc-mingw-w64-x86-64 \
             g++-mingw-w64-x86-64 \
-            mingw-w64-x86-64-dev \
             libbz2-dev \
             libgmp-dev \
             zlib1g-dev \
@@ -52,7 +51,6 @@ jobs:
       - name: Ensure OpenCL (libOpenCL.a)
         run: |
           set -e
-      
           echo "=== Checking libOpenCL.a ==="
           if [ -f /usr/x86_64-w64-mingw32/lib/libOpenCL.a ]; then
             echo "✔ libOpenCL.a already exists"
@@ -61,31 +59,33 @@ jobs:
       
           echo "❌ libOpenCL.a not found, building..."
       
-          sudo apt-get update
-          sudo apt-get install -y cmake mingw-w64
+          # ❗ 使用稳定版本（避免 OpenCLHeaders 依赖）
+          git clone https://github.com/KhronosGroup/OpenCL-ICD-Loader.git
+          cd OpenCL-ICD-Loader
+          git checkout v2025.07.22
       
-          # 下载 OpenCL ICD Loader
-          wget -q https://github.com/KhronosGroup/OpenCL-ICD-Loader/archive/refs/heads/main.tar.gz
-          tar -xzf main.tar.gz
-          cd OpenCL-ICD-Loader-main
+          # ❗ 防止 include 污染
           export C_INCLUDE_PATH=
           export CPLUS_INCLUDE_PATH=
-
+      
           mkdir build && cd build
       
-          # 交叉编译 Windows 版 OpenCL loader
           cmake .. \
             -DCMAKE_SYSTEM_NAME=Windows \
             -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
             -DCMAKE_RC_COMPILER=x86_64-w64-mingw32-windres \
             -DBUILD_SHARED_LIBS=OFF \
-            -DBUILD_TESTING=OFF \
-            -DOPENCL_ICD_LOADER_HEADERS_DIR=../inc \
-            -DCMAKE_C_FLAGS="-I$(pwd)/../inc"
+            -DBUILD_TESTING=OFF
       
           make -j$(nproc)
       
-          # 安装到 MinGW 路径
+          # ❗ 确保生成成功
+          if [ ! -f libOpenCL.a ]; then
+            echo "❌ build failed: libOpenCL.a not found"
+            exit 1
+          fi
+      
+          # 安装到 MinGW
           sudo cp libOpenCL.a /usr/x86_64-w64-mingw32/lib/
       
           sudo mkdir -p /usr/x86_64-w64-mingw32/include/CL
