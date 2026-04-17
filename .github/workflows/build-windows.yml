@@ -218,6 +218,11 @@ jobs:
         working-directory: ./src
         run: |
           make -s clean
+          if [ -f opencl_dynamic_loader.c ]; then
+            rm -f opencl_dynamic_loader.c
+            echo "Removed opencl_dynamic_loader.c"
+          fi
+          rm -f opencl_dynamic_loader.o 2>/dev/null || true
           make -sj$(nproc)
           x86_64-w64-mingw32-strip ../run/*.exe
 
