@@ -34,9 +34,9 @@ jobs:
 
       - name: Download and install MinGW OpenSSL
         run: |
-          wget https://github.com/openssl/openssl/releases/download/OpenSSL_1_1_1w/openssl-1.1.1w.tar.gz
-          tar -xzf openssl-1.1.1w.tar.gz
-          cd openssl-1.1.1w
+          wget https://github.com/openssl/openssl/releases/download/openssl-4.0.0/openssl-4.0.0.tar.gz
+          tar -xzf openssl-4.0.0.tar.gz
+          cd openssl-4.0.0
 
           # 配置交叉编译：目标为 Windows 64位，安装路径为 /usr/local/mingw-openssl
           ./Configure mingw64 \
