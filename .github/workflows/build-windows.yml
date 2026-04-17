@@ -81,7 +81,6 @@ jobs:
           x86_64-w64-mingw32-dlltool -d opencl.def -l libOpenCL.a
           sudo cp libOpenCL.a /usr/local/mingw-openssl/lib/
           echo "OpenCL headers and import library installed."
-        shell: /usr/bin/bash -e {0}
       - name: Cross-compile libbz2 for Windows
         run: |
           wget -q https://sourceware.org/pub/bzip2/bzip2-1.0.8.tar.gz
