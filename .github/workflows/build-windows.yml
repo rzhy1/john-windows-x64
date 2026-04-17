@@ -29,7 +29,8 @@ jobs:
             zlib1g-dev \
             pkg-config \
             ocl-icd-opencl-dev \
-            opencl-headers
+            opencl-headers \
+            pocl-opencl-icd
 
       - name: Cross-compile zlib for Windows
         run: |
@@ -115,7 +116,6 @@ jobs:
               LIBS="-lssl -lcrypto -lws2_32 -lcrypt32  -lwinpthread" \
               \
               --disable-native-tests \
-              --disable-openmp \
               --enable-opencl
 
       - name: Build John the Ripper
