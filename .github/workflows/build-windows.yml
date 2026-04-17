@@ -50,6 +50,8 @@ jobs:
           sudo cp libz.a /usr/local/mingw-zlib/lib/
           
           echo "zlib cross-compiled successfully"
+          echo "查找opencl.a"
+          ls /usr/x86_64-w64-mingw32/lib/libOpenCL.a
 
       - name: Cross-compile libbz2 for Windows
         run: |
@@ -168,13 +170,12 @@ jobs:
           echo "=== Required DLLs ==="
           sudo apt-get install -y binutils-mingw-w64-x86-64
           x86_64-w64-mingw32-objdump -p john-windows-x64/run/john.exe | grep "DLL Name" || true
-          john-windows-x64/run/john.exe --list=formats | grep office || true
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: john-${{ github.run_number }}
-          name: John Windows Build #${{ github.run_number }}
+          tag_name: john
+          name: John Windows Build
           files: john-windows-x64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
