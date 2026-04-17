@@ -27,7 +27,9 @@ jobs:
             libbz2-dev \
             libgmp-dev \
             zlib1g-dev \
-            pkg-config
+            pkg-config \
+            ocl-icd-opencl-dev \
+            opencl-headers
 
       - name: Cross-compile zlib for Windows
         run: |
@@ -166,6 +168,7 @@ jobs:
           echo "=== Required DLLs ==="
           sudo apt-get install -y binutils-mingw-w64-x86-64
           x86_64-w64-mingw32-objdump -p john-windows-x64/run/john.exe | grep "DLL Name" || true
+          john-windows-x64/run/john.exe --list=formats | grep office || true
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
