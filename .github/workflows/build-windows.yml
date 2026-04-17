@@ -58,7 +58,8 @@ jobs:
           make CC=x86_64-w64-mingw32-gcc \
             AR=x86_64-w64-mingw32-ar \
             RANLIB=x86_64-w64-mingw32-ranlib \
-            -j$(nproc)
+            -j$(nproc) \
+            libbz2.a
           
           sudo mkdir -p /usr/local/mingw-bzip2/include
           sudo mkdir -p /usr/local/mingw-bzip2/lib
@@ -168,7 +169,6 @@ jobs:
           x86_64-w64-mingw32-objdump -p john-windows-x64/run/john.exe | grep "DLL Name" || true
 
       - name: Create Release
-        if: github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: john-${{ github.run_number }}
