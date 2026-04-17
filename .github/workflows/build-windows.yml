@@ -62,7 +62,7 @@ jobs:
           # ❗ 使用稳定版本（避免 OpenCLHeaders 依赖）
           git clone https://github.com/KhronosGroup/OpenCL-ICD-Loader.git
           cd OpenCL-ICD-Loader
-          git checkout v2025.07.22
+          git checkout v2023.04.17
       
           # ❗ 防止 include 污染
           export C_INCLUDE_PATH=
