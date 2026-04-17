@@ -188,8 +188,9 @@ jobs:
       - name: Configure for John the Ripper
         working-directory: ./src
         run: |
+          export ac_cv_header_dlfcn_h=no
+          export ac_cv_func_fork=yes
           ./configure \
-              ac_cv_header_dlfcn_h=no \
               --host=x86_64-w64-mingw32 \
               --build=x86_64-linux-gnu \
               CC=x86_64-w64-mingw32-gcc \
