@@ -9,10 +9,10 @@ on:
 
 jobs:
   build-windows:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout John the Ripper source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: openwall/john
           ref: bleeding-jumbo
@@ -20,7 +20,6 @@ jobs:
       - name: Install MinGW-w64 and cross-compile dependencies
         run: |
           sudo apt-get update
-          # MinGW-w64 交叉编译工具链
           sudo apt-get install -y \
             gcc-mingw-w64-x86-64 \
             g++-mingw-w64-x86-64 \
@@ -82,15 +81,15 @@ jobs:
 
       - name: Collect Windows binaries and dependencies
         run: |
-          mkdir -p john-windows-x64
+          mkdir -p john-windows-x64/run
           
           # 复制可执行文件
-          cp -v run/*.exe john-windows-x64/ 2>/dev/null || true
+          cp -v run/*.exe john-windows-x64/run/ 2>/dev/null || true
           
           # 复制配置文件
-          cp -v run/*.conf john-windows-x64/ 2>/dev/null || true
-          cp -v run/*.chr john-windows-x64/ 2>/dev/null || true
-          cp -v run/password.lst john-windows-x64/ 2>/dev/null || true
+          cp -v run/*.conf john-windows-x64/run/ 2>/dev/null || true
+          cp -v run/*.chr john-windows-x64/run/ 2>/dev/null || true
+          cp -v run/password.lst john-windows-x64/run/ 2>/dev/null || true
           
           # 复制子目录
           cp -r run/rules john-windows-x64/ 2>/dev/null || true
