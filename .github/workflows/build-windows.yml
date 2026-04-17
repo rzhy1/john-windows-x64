@@ -35,16 +35,29 @@ jobs:
 
       - name: Download and install MinGW OpenSSL
         run: |
-          # 下载预编译的 MinGW OpenSSL
-          wget https://github.com/Windows-on-ARM/openssl-mingw/releases/download/openssl-1.1.1w/openssl-1.1.1w-mingw64.zip
-          sudo unzip -q openssl-1.1.1w-mingw64.zip -d /usr/local/mingw-openssl
-          
-          # 或者使用 Ubuntu 23.04+ 可以直接安装：
-          # sudo apt-get install -y libssl-mingw-w64-dev
-          
-          # 验证文件存在
+          wget https://github.com/openssl/openssl/releases/download/OpenSSL_1_1_1w/openssl-1.1.1w.tar.gz
+          tar -xzf openssl-1.1.1w.tar.gz
+          cd openssl-1.1.1w
+
+          # 配置交叉编译：目标为 Windows 64位，安装路径为 /usr/local/mingw-openssl
+          ./Configure mingw64 \
+            --prefix=/usr/local/mingw-openssl \
+            --cross-compile-prefix=x86_64-w64-mingw32- \
+            no-shared \
+            no-tests \
+            --openssldir=/usr/local/mingw-openssl/ssl
+
+          # 编译并安装
+          make -j$(nproc)
+          sudo make install
+
+          # 返回工作目录
+          cd ..
+
+          # 验证安装
           ls -la /usr/local/mingw-openssl/include/openssl/
           ls -la /usr/local/mingw-openssl/lib/
+          
 
       - name: Configure for Windows cross-compilation
         working-directory: ./src
