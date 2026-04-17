@@ -190,6 +190,7 @@ jobs:
         run: |
           sed -i 's/<dlfcn.h>/"Win32-dlfcn-port.h"/g' opencl_dynamic_loader.c
           sed -i 's/fchdir([^)]*)/(-1)/g' opencl_common.c
+          sed -i '1i #define uint unsigned int' opencl_enpass_fmt_plug.c
           export ac_cv_header_dlfcn_h=no
           export ac_cv_func_dlopen=no
           export ac_cv_func_fchdir=no
@@ -198,8 +199,7 @@ jobs:
               --build=x86_64-linux-gnu \
               CC=x86_64-w64-mingw32-gcc \
               CXX=x86_64-w64-mingw32-g++ \
-              CPPFLAGS="-Duint=\"unsigned int\" \
-                        -I/usr/local/mingw-openssl/include \
+              CPPFLAGS="-I/usr/local/mingw-openssl/include \
                         -I/usr/local/mingw-zlib/include \
                         -I/usr/local/mingw-bzip2/include \
                         -I/usr/x86_64-w64-mingw32/include" \
