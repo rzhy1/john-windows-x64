@@ -48,50 +48,40 @@ jobs:
           echo "zlib cross-compiled successfully"
 
 
-      - name: Ensure OpenCL (libOpenCL.a)
+      - name: Setup OpenCL for Windows Cross-compile
         run: |
-          set -e
-          echo "=== Checking libOpenCL.a ==="
-          if [ -f /usr/x86_64-w64-mingw32/lib/libOpenCL.a ]; then
-            echo "✔ libOpenCL.a already exists"
-            exit 0
-          fi
+          # 1. 下载 Khronos 官方的 OpenCL 头文件
+          wget -q https://github.com/KhronosGroup/OpenCL-Headers/archive/refs/heads/main.zip
+          unzip -q main.zip
+          sudo mkdir -p /usr/local/mingw-openssl/include/CL
+          sudo cp OpenCL-Headers-main/CL/*.h /usr/local/mingw-openssl/include/CL/
       
-          echo "❌ libOpenCL.a not found, building..."
+          # 2. 创建 OpenCL 导入库 (.def 文件)
+          echo "LIBRARY OpenCL.dll" > opencl.def
+          echo "EXPORTS" >> opencl.def
+          echo "clGetPlatformIDs" >> opencl.def
+          echo "clGetDeviceIDs" >> opencl.def
+          echo "clCreateContext" >> opencl.def
+          echo "clCreateCommandQueue" >> opencl.def
+          echo "clCreateBuffer" >> opencl.def
+          echo "clCreateProgramWithSource" >> opencl.def
+          echo "clBuildProgram" >> opencl.def
+          echo "clCreateKernel" >> opencl.def
+          echo "clEnqueueNDRangeKernel" >> opencl.def
+          echo "clEnqueueReadBuffer" >> opencl.def
+          echo "clEnqueueWriteBuffer" >> opencl.def
+          echo "clFinish" >> opencl.def
+          echo "clReleaseKernel" >> opencl.def
+          echo "clReleaseProgram" >> opencl.def
+          echo "clReleaseCommandQueue" >> opencl.def
+          echo "clReleaseContext" >> opencl.def
+          echo "clReleaseMemObject" >> opencl.def
       
-          # ❗ 使用稳定版本（避免 OpenCLHeaders 依赖）
-          git clone https://github.com/KhronosGroup/OpenCL-ICD-Loader.git
-          cd OpenCL-ICD-Loader
-          git reset --hard b1bce7c3c580a8345205cf65fc1a5f55ba9cdb01
-      
-          # ❗ 防止 include 污染
-          export C_INCLUDE_PATH=
-          export CPLUS_INCLUDE_PATH=
-      
-          mkdir build && cd build
-      
-          cmake .. \
-            -DCMAKE_SYSTEM_NAME=Windows \
-            -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
-            -DCMAKE_RC_COMPILER=x86_64-w64-mingw32-windres \
-            -DBUILD_SHARED_LIBS=OFF \
-            -DBUILD_TESTING=OFF
-      
-          make -j$(nproc)
-      
-          # ❗ 确保生成成功
-          if [ ! -f libOpenCL.a ]; then
-            echo "❌ build failed: libOpenCL.a not found"
-            exit 1
-          fi
-      
-          # 安装到 MinGW
-          sudo cp libOpenCL.a /usr/x86_64-w64-mingw32/lib/
-      
-          sudo mkdir -p /usr/x86_64-w64-mingw32/include/CL
-          sudo cp ../inc/CL/*.h /usr/x86_64-w64-mingw32/include/CL/
-      
-          echo "✔ OpenCL (libOpenCL.a) installed"
+          # 3. 生成静态导入库 libOpenCL.a
+          x86_64-w64-mingw32-dlltool -d opencl.def -l libOpenCL.a
+          sudo cp libOpenCL.a /usr/local/mingw-openssl/lib/
+          echo "OpenCL headers and import library installed."
+        shell: /usr/bin/bash -e {0}
       - name: Cross-compile libbz2 for Windows
         run: |
           wget -q https://sourceware.org/pub/bzip2/bzip2-1.0.8.tar.gz
