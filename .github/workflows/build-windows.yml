@@ -43,7 +43,11 @@ jobs:
             --prefix=/usr/local/mingw-openssl \
             --cross-compile-prefix=x86_64-w64-mingw32- \
             no-shared \
+            no-module \
             no-tests \
+            no-dso \
+            no-engine \
+            -static \
             --openssldir=/usr/local/mingw-openssl/ssl
 
           # 编译并安装
@@ -58,26 +62,36 @@ jobs:
           ls -la /usr/local/mingw-openssl/lib/
           
 
-      - name: Configure for Windows cross-compilation
+      - name: Configure for John the Ripper
         working-directory: ./src
         run: |
           # 明确指定 OpenSSL 路径
           ./configure \
-            --host=x86_64-w64-mingw32 \
-            --target=x86_64-w64-mingw32 \
-            --build=x86_64-linux-gnu \
-            CC=x86_64-w64-mingw32-gcc \
-            CXX=x86_64-w64-mingw32-g++ \
-            CPPFLAGS="-I/usr/local/mingw-openssl/include -I/usr/x86_64-w64-mingw32/include" \
-            LDFLAGS="-L/usr/local/mingw-openssl/lib -L/usr/x86_64-w64-mingw32/lib" \
-            LIBS="-lssl -lcrypto -lws2_32 -lgdi32 -lcrypt32" \
-            --disable-openmp
+              --host=x86_64-w64-mingw32 \
+              --target=x86_64-w64-mingw32 \
+              --build=x86_64-linux-gnu \
+              \
+              CC=x86_64-w64-mingw32-gcc \
+              CXX=x86_64-w64-mingw32-g++ \
+              \
+              CPPFLAGS="-I/usr/local/mingw-openssl/include -I/usr/x86_64-w64-mingw32/include" \
+              \
+              CFLAGS="-O2 -ffunction-sections -fdata-sections -flto -DPTW32_STATIC_LIB" \
+              \
+              LDFLAGS="-static -static-libgcc -static-libstdc++ -flto -Wl,--gc-sections -s \
+            -L/usr/local/mingw-openssl/lib -L/usr/x86_64-w64-mingw32/lib" \
+              \
+              LIBS="-lssl -lcrypto -lws2_32 -lcrypt32" \
+              \
+              --disable-native-tests \
+              --disable-shared
 
       - name: Build John the Ripper
         working-directory: ./src
         run: |
           make -s clean
           make -sj$(nproc)
+          x86_64-w64-mingw32-strip ../run/*.exe
 
       - name: Collect Windows binaries and dependencies
         run: |
@@ -93,7 +107,8 @@ jobs:
           
           # 复制子目录
           cp -r run/rules john-windows-x64/ 2>/dev/null || true
-          cp -r run/ztex john-windows-x64/ 2>/dev/null || true
+          cp -r run/opencl john-windows-x64/ 2>/dev/null || true
+          cp -r doc john-windows-x64/ 2>/dev/null || true
           
           # 复制 OpenSSL DLL（运行时需要）
           cp -v /usr/local/mingw-openssl/bin/*.dll john-windows-x64/ 2>/dev/null || true
@@ -108,7 +123,7 @@ jobs:
           zip -r john-windows-x64.zip john-windows-x64/
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: john-windows-x64
           path: john-windows-x64.zip
@@ -121,3 +136,13 @@ jobs:
           echo "=== Required DLLs ==="
           sudo apt-get install -y binutils-mingw-w64-x86-64
           x86_64-w64-mingw32-objdump -p john-windows-x64/john.exe | grep "DLL Name" || true
+
+      - name: Create Release
+        if: github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: john-${{ github.run_number }}
+          name: John Windows Build #${{ github.run_number }}
+          files: john-windows-x64.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
