@@ -28,6 +28,7 @@ jobs:
             libgmp-dev \
             zlib1g-dev \
             pkg-config \
+            mingw-w64 \
             ocl-icd-opencl-dev \
             opencl-headers \
             pocl-opencl-icd
