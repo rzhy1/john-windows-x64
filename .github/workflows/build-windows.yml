@@ -204,7 +204,7 @@ jobs:
                         -I/usr/local/mingw-zlib/include \
                         -I/usr/local/mingw-bzip2/include \
                         -I/usr/x86_64-w64-mingw32/include" \
-              CFLAGS="-O3 -march=x86-64-v4 -g0 -ffunction-sections -fdata-sections -flto" \
+              CFLAGS="-O3 -march=x86-64-v3 -g0 -ffunction-sections -fdata-sections -flto" \
               LDFLAGS="-static \
                        -static-libgcc \
                        -static-libstdc++ \
