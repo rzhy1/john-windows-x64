@@ -105,6 +105,7 @@ jobs:
           printf '%s\n' "clRetainKernel" >> opencl.def
           printf '%s\n' "clReleaseKernel" >> opencl.def
           printf '%s\n' "clGetKernelInfo" >> opencl.def
+          printf '%s\n' "clGetKernelWorkGroupInfo" >> opencl.def
           
           # 执行
           printf '%s\n' "clEnqueueNDRangeKernel" >> opencl.def
@@ -204,7 +205,7 @@ jobs:
                         -I/usr/local/mingw-zlib/include \
                         -I/usr/local/mingw-bzip2/include \
                         -I/usr/x86_64-w64-mingw32/include" \
-              CFLAGS="-O3 -mavx2 -g0 -ffunction-sections -fdata-sections -flto" \
+              CFLAGS="-O3 -mavx2 -g0 -ffunction-sections -fdata-sections" \
               LDFLAGS="-static \
                        -static-libgcc \
                        -static-libstdc++ \
