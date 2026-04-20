@@ -314,7 +314,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: john-windows-x64
-          path: john-windows-x64.zip
+          path: john-windows-x64/
 
       - name: Verify build
         if: ${{ steps.check_upstream.outputs.skip != 'true' }}
@@ -345,7 +345,7 @@ jobs:
           tag: ${{ env.JOHN_VERSION }}
           name: John the Ripper ${{ env.JOHN_VERSION }}
           allowUpdates: true
-          artifacts: "john-windows-x64.zip"
+          artifacts: john-windows-x64.zip
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Recreate .cache directory
