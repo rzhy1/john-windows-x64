@@ -13,13 +13,6 @@ jobs:
   build-windows:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout John the Ripper source
-        if: ${{ steps.check_upstream.outputs.skip != 'true' }}
-        uses: actions/checkout@v6
-        with:
-          repository: openwall/john
-          ref: bleeding-jumbo
-
       - name: Check openwall/john updates
         if: ${{ steps.check_upstream.outputs.skip != 'true' }}
         id: check_upstream
@@ -52,6 +45,14 @@ jobs:
             echo "skip=false" >> $GITHUB_OUTPUT
             echo "$NEW_SHA" > .cache/last_sha
           fi
+          
+      - name: Checkout John the Ripper source
+        if: ${{ steps.check_upstream.outputs.skip != 'true' }}
+        uses: actions/checkout@v6
+        with:
+          repository: openwall/john
+          ref: bleeding-jumbo
+          
       - name: Install MinGW-w64 and cross-compile dependencies
         if: ${{ steps.check_upstream.outputs.skip != 'true' }}
         run: |
