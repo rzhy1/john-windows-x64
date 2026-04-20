@@ -6,52 +6,76 @@ on:
   pull_request:
     branches: [ "main", "master", "bleeding-jumbo" ]
   workflow_dispatch:
+    inputs:
+      force:
+        description: "强制编译 (1=强制, 0=仅检测更新)"
+        required: false
+        default: "0"
   schedule:
     - cron: "0 0 * * *"
+
+env:
+  # workflow_dispatch 时可通过界面输入 force=1 强制编译
+  FORCE_BUILD: ${{ github.event.inputs.force || '0' }}
 
 jobs:
   build-windows:
     runs-on: ubuntu-latest
     steps:
-      - name: Check openwall/john updates
-        id: check_upstream
+      # 1. 尝试恢复最近一次保存的 .cache
+      - name: Restore last upstream SHA cache
+        uses: actions/cache@v4
+        with:
+          path: .cache
+          key: upstream-sha-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            upstream-sha-${{ runner.os }}-
+
+      # 2. 检查上游 bleeding-jumbo 分支是否有更新
+      - id: check_upstream
+        name: Check upstream changes
+        shell: bash
         run: |
           mkdir -p .cache
-
-          git clone --depth=1 https://github.com/openwall/john.git tmp
-          NEW_SHA=$(cd tmp && git rev-parse HEAD)
+          
+          # 获取上游 john 仓库 bleeding-jumbo 分支最新 commit SHA (不克隆直接查询)
+          NEW_SHA=$(git ls-remote https://github.com/openwall/john.git refs/heads/bleeding-jumbo | awk '{print $1}')
           echo "new_sha=$NEW_SHA" >> $GITHUB_OUTPUT
-
+          echo "Found upstream NEW_SHA=$NEW_SHA"
+          
           if [ -f .cache/last_sha ]; then
             OLD_SHA=$(cat .cache/last_sha)
           else
             OLD_SHA=""
           fi
-
           echo "old_sha=$OLD_SHA" >> $GITHUB_OUTPUT
-
-          # 手动强制编译
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "skip=false" >> $GITHUB_OUTPUT
-            echo "$NEW_SHA" > .cache/last_sha
-            exit 0
-          fi
-
-          # 无变化 → 跳过
-          if [ "$NEW_SHA" = "$OLD_SHA" ]; then
-            echo "skip=true" >> $GITHUB_OUTPUT
-          else
-            echo "skip=false" >> $GITHUB_OUTPUT
-            echo "$NEW_SHA" > .cache/last_sha
-          fi
+          echo "Found cached OLD_SHA=$OLD_SHA"
           
+          if [ "${FORCE_BUILD}" = "1" ]; then
+            echo "FORCE_BUILD=1 -> 强制编译"
+            echo "skip=false" >> $GITHUB_OUTPUT
+          else
+            if [ "$NEW_SHA" = "$OLD_SHA" ]; then
+              echo "No upstream changes, skipping build."
+              echo "skip=true" >> $GITHUB_OUTPUT
+            else
+              # 记录新 sha 到 .cache/last_sha
+              echo "$NEW_SHA" > .cache/last_sha
+              echo "skip=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      # =========================================================================
+      # 下面的所有构建相关步骤都加上条件：只有 skip != 'true' 才会运行
+      # =========================================================================
+
       - name: Checkout John the Ripper source
         if: ${{ steps.check_upstream.outputs.skip != 'true' }}
         uses: actions/checkout@v6
         with:
           repository: openwall/john
           ref: bleeding-jumbo
-          
+
       - name: Install MinGW-w64 and cross-compile dependencies
         if: ${{ steps.check_upstream.outputs.skip != 'true' }}
         run: |
@@ -62,7 +86,7 @@ jobs:
             libbz2-dev \
             libgmp-dev \
             zlib1g-dev \
-            pkg-config 
+            pkg-config
 
       - name: Cross-compile zlib for Windows
         if: ${{ steps.check_upstream.outputs.skip != 'true' }}
@@ -70,7 +94,6 @@ jobs:
           wget -q https://github.com/madler/zlib/releases/download/v1.3.2/zlib-1.3.2.tar.gz
           tar -xzf zlib-1.3.2.tar.gz
           cd zlib-1.3.2
-          
           # 交叉编译 zlib
           make -f win32/Makefile.gcc \
             PREFIX=x86_64-w64-mingw32- \
@@ -81,9 +104,7 @@ jobs:
           sudo mkdir -p /usr/local/mingw-zlib/lib
           sudo cp zlib.h zconf.h /usr/local/mingw-zlib/include/
           sudo cp libz.a /usr/local/mingw-zlib/lib/
-          
           echo "zlib cross-compiled successfully"
-
 
       - name: Setup OpenCL for Windows Cross-compile
         if: ${{ steps.check_upstream.outputs.skip != 'true' }}
@@ -93,38 +114,32 @@ jobs:
           unzip -q main.zip
           sudo mkdir -p /usr/x86_64-w64-mingw32/include/CL
           sudo cp OpenCL-Headers-main/CL/*.h /usr/x86_64-w64-mingw32/include/CL/
-      
+          
           # 2. 创建 OpenCL 导入库 (.def 文件)
           : > opencl.def
-
           printf '%s\n' "LIBRARY OpenCL.dll" >> opencl.def
           printf '%s\n' "EXPORTS" >> opencl.def
-          
           # 平台 / 设备
           printf '%s\n' "clGetPlatformIDs" >> opencl.def
           printf '%s\n' "clGetPlatformInfo" >> opencl.def
           printf '%s\n' "clGetDeviceIDs" >> opencl.def
           printf '%s\n' "clGetDeviceInfo" >> opencl.def
-          
           # 上下文
           printf '%s\n' "clCreateContext" >> opencl.def
           printf '%s\n' "clCreateContextFromType" >> opencl.def
           printf '%s\n' "clRetainContext" >> opencl.def
           printf '%s\n' "clReleaseContext" >> opencl.def
-          
           # 命令队列
           printf '%s\n' "clCreateCommandQueue" >> opencl.def
           printf '%s\n' "clCreateCommandQueueWithProperties" >> opencl.def
           printf '%s\n' "clRetainCommandQueue" >> opencl.def
           printf '%s\n' "clReleaseCommandQueue" >> opencl.def
-          
           # 内存
           printf '%s\n' "clCreateBuffer" >> opencl.def
           printf '%s\n' "clCreateImage" >> opencl.def
           printf '%s\n' "clRetainMemObject" >> opencl.def
           printf '%s\n' "clReleaseMemObject" >> opencl.def
           printf '%s\n' "clGetMemObjectInfo" >> opencl.def
-          
           # Program
           printf '%s\n' "clCreateProgramWithSource" >> opencl.def
           printf '%s\n' "clCreateProgramWithBinary" >> opencl.def
@@ -135,7 +150,6 @@ jobs:
           printf '%s\n' "clReleaseProgram" >> opencl.def
           printf '%s\n' "clGetProgramInfo" >> opencl.def
           printf '%s\n' "clGetProgramBuildInfo" >> opencl.def
-          
           # Kernel
           printf '%s\n' "clCreateKernel" >> opencl.def
           printf '%s\n' "clCreateKernelsInProgram" >> opencl.def
@@ -144,63 +158,55 @@ jobs:
           printf '%s\n' "clReleaseKernel" >> opencl.def
           printf '%s\n' "clGetKernelInfo" >> opencl.def
           printf '%s\n' "clGetKernelWorkGroupInfo" >> opencl.def
-          
           # 执行
           printf '%s\n' "clEnqueueNDRangeKernel" >> opencl.def
           printf '%s\n' "clEnqueueTask" >> opencl.def
-          
           # Buffer 操作
           printf '%s\n' "clEnqueueReadBuffer" >> opencl.def
           printf '%s\n' "clEnqueueWriteBuffer" >> opencl.def
           printf '%s\n' "clEnqueueCopyBuffer" >> opencl.def
           printf '%s\n' "clEnqueueMapBuffer" >> opencl.def
           printf '%s\n' "clEnqueueUnmapMemObject" >> opencl.def
-          
           # 同步
           printf '%s\n' "clFlush" >> opencl.def
           printf '%s\n' "clFinish" >> opencl.def
-          
           # 事件
           printf '%s\n' "clWaitForEvents" >> opencl.def
           printf '%s\n' "clGetEventInfo" >> opencl.def
           printf '%s\n' "clCreateUserEvent" >> opencl.def
           printf '%s\n' "clSetUserEventStatus" >> opencl.def
           printf '%s\n' "clReleaseEvent" >> opencl.def
-          
           # Profiling
           printf '%s\n' "clGetEventProfilingInfo" >> opencl.def
-          
           # 扩展
           printf '%s\n' "clGetExtensionFunctionAddress" >> opencl.def
           printf '%s\n' "clGetExtensionFunctionAddressForPlatform" >> opencl.def
-      
+          
           # 3. 生成静态导入库 libOpenCL.a
           x86_64-w64-mingw32-dlltool -d opencl.def -l libOpenCL.a
           sudo mkdir -p /usr/x86_64-w64-mingw32/lib/
           sudo cp libOpenCL.a /usr/x86_64-w64-mingw32/lib/
           echo "OpenCL installed to MinGW standard path"
           ls -la /usr/x86_64-w64-mingw32/lib/libOpenCL.a
-        
+
       - name: Cross-compile libbz2 for Windows
         if: ${{ steps.check_upstream.outputs.skip != 'true' }}
         run: |
           wget -q https://sourceware.org/pub/bzip2/bzip2-1.0.8.tar.gz
           tar -xzf bzip2-1.0.8.tar.gz
           cd bzip2-1.0.8
-          
           # 交叉编译 libbz2
           make CC=x86_64-w64-mingw32-gcc \
-            AR=x86_64-w64-mingw32-ar \
-            RANLIB=x86_64-w64-mingw32-ranlib \
-            -j$(nproc) \
-            libbz2.a
+               AR=x86_64-w64-mingw32-ar \
+               RANLIB=x86_64-w64-mingw32-ranlib \
+               -j$(nproc) \
+               libbz2.a
           
           sudo mkdir -p /usr/local/mingw-bzip2/include
           sudo mkdir -p /usr/local/mingw-bzip2/lib
           sudo cp bzlib.h /usr/local/mingw-bzip2/include/
           sudo cp libbz2.a /usr/local/mingw-bzip2/lib/
-          
-          echo "libbz2 cross-compiled successfully"  
+          echo "libbz2 cross-compiled successfully"
 
       - name: Download and install MinGW OpenSSL
         if: ${{ steps.check_upstream.outputs.skip != 'true' }}
@@ -208,23 +214,23 @@ jobs:
           wget -q https://github.com/openssl/openssl/releases/download/OpenSSL_1_1_1w/openssl-1.1.1w.tar.gz
           tar -xzf openssl-1.1.1w.tar.gz
           cd openssl-1.1.1w
+          
           ./Configure mingw64 \
             --prefix=/usr/local/mingw-openssl \
             --cross-compile-prefix=x86_64-w64-mingw32- \
-             no-shared \
-             no-tests \
-             no-dso \
-             -static \
+            no-shared \
+            no-tests \
+            no-dso \
+            -static \
             --openssldir=/usr/local/mingw-openssl/ssl
+          
           make -j$(nproc)
           sudo make install
-
           cd ..
-
+          
           # 验证安装
           ls -la /usr/local/mingw-openssl/include/openssl/
           ls -la /usr/local/mingw-openssl/lib/
-          
 
       - name: Configure for John the Ripper
         if: ${{ steps.check_upstream.outputs.skip != 'true' }}
@@ -233,32 +239,34 @@ jobs:
           sed -i '1i #include <stdio.h>' Win32-dlfcn-port.h
           sed -i 's/<dlfcn.h>/"Win32-dlfcn-port.h"/g' opencl_dynamic_loader.c
           sed -i 's/fchdir([^)]*)/(-1)/g' opencl_common.c
+          
           export ac_cv_header_dlfcn_h=no
           export ac_cv_func_dlopen=no
           export ac_cv_func_fchdir=no
+          
           ./configure \
-              --host=x86_64-w64-mingw32 \
-              --build=x86_64-linux-gnu \
-              CC=x86_64-w64-mingw32-gcc \
-              CXX=x86_64-w64-mingw32-g++ \
-              CPPFLAGS="-Duint=unsigned \
-                        -I/usr/local/mingw-openssl/include \
-                        -I/usr/local/mingw-zlib/include \
-                        -I/usr/local/mingw-bzip2/include \
-                        -I/usr/x86_64-w64-mingw32/include" \
-              CFLAGS="-Ofast -march=tigerlake -funroll-loops -g0 -ffunction-sections -fdata-sections" \
-              LDFLAGS="-static \
-                       -static-libgcc \
-                       -static-libstdc++ \
-                       -Wl,--gc-sections \
-                       -Wl,--strip-all \
-                       -L/usr/local/mingw-openssl/lib \
-                       -L/usr/local/mingw-zlib/lib \
-                       -L/usr/local/mingw-bzip2/lib \
-                       -L/usr/x86_64-w64-mingw32/lib" \
-              LIBS="-lOpenCL -lwinpthread -lssl -lcrypto -lz -lbz2 -lws2_32 -lgdi32 -lcrypt32 -lcfgmgr32" \
-              --disable-native-tests \
-              --enable-opencl
+            --host=x86_64-w64-mingw32 \
+            --build=x86_64-linux-gnu \
+            CC=x86_64-w64-mingw32-gcc \
+            CXX=x86_64-w64-mingw32-g++ \
+            CPPFLAGS="-Duint=unsigned \
+                      -I/usr/local/mingw-openssl/include \
+                      -I/usr/local/mingw-zlib/include \
+                      -I/usr/local/mingw-bzip2/include \
+                      -I/usr/x86_64-w64-mingw32/include" \
+            CFLAGS="-Ofast -march=tigerlake -funroll-loops -g0 -ffunction-sections -fdata-sections" \
+            LDFLAGS="-static \
+                     -static-libgcc \
+                     -static-libstdc++ \
+                     -Wl,--gc-sections \
+                     -Wl,--strip-all \
+                     -L/usr/local/mingw-openssl/lib \
+                     -L/usr/local/mingw-zlib/lib \
+                     -L/usr/local/mingw-bzip2/lib \
+                     -L/usr/x86_64-w64-mingw32/lib" \
+            LIBS="-lOpenCL -lwinpthread -lssl -lcrypto -lz -lbz2 -lws2_32 -lgdi32 -lcrypt32 -lcfgmgr32" \
+            --disable-native-tests \
+            --enable-opencl
 
       - name: Build John the Ripper
         if: ${{ steps.check_upstream.outputs.skip != 'true' }}
@@ -275,12 +283,12 @@ jobs:
           
           # 复制可执行文件
           cp -v run/*.exe john-windows-x64/run/ 2>/dev/null || true
-          cp -v run/*.pl john-windows-x64/run/ 2>/dev/null || true
-          cp -v run/*.py john-windows-x64/run/ 2>/dev/null || true
+          cp -v run/*.pl  john-windows-x64/run/ 2>/dev/null || true
+          cp -v run/*.py  john-windows-x64/run/ 2>/dev/null || true
           
           # 复制配置文件
           cp -v run/*.conf john-windows-x64/run/ 2>/dev/null || true
-          cp -v run/*.chr john-windows-x64/run/ 2>/dev/null || true
+          cp -v run/*.chr  john-windows-x64/run/ 2>/dev/null || true
           cp -v run/password.lst john-windows-x64/run/ 2>/dev/null || true
           
           # 复制子目录
@@ -318,12 +326,32 @@ jobs:
           sudo apt-get install -y binutils-mingw-w64-x86-64
           x86_64-w64-mingw32-objdump -p john-windows-x64/run/john.exe | grep "DLL Name" || true
 
+      # === 生成带 SHA 标识的版本号 ===
+      - name: Get version number
+        if: ${{ steps.check_upstream.outputs.skip != 'true' }}
+        run: |
+          # 提取 check_upstream 中生成的 new_sha 前10位
+          SHORT_SHA=$(echo "${{ steps.check_upstream.outputs.new_sha }}" | cut -c 1-10)
+          # 拼接形成诸如 1.9.0-jumbo-1+bleeding-f514ece8ec 的字符串
+          VERSION="1.9.0-jumbo-1+bleeding-${SHORT_SHA}"
+          echo "JOHN_VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "Generated version: ${VERSION}"
+
+      # === 创建并上传 Release ===
       - name: Create Release
         if: ${{ steps.check_upstream.outputs.skip != 'true' }}
-        uses: softprops/action-gh-release@v2
+        uses: ncipollo/release-action@v1
         with:
-          tag_name: john
-          name: John Windows Build
-          files: john-windows-x64.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ env.JOHN_VERSION }}
+          name: John the Ripper ${{ env.JOHN_VERSION }} Windows Build
+          allowUpdates: true
+          artifacts: "john-windows-x64.zip"
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # 3. 构建成功后，把 .cache（包含 last_sha）存为新的缓存
+      - name: Save last upstream SHA to cache
+        if: ${{ steps.check_upstream.outputs.skip == 'false' }}
+        uses: actions/cache/save@v4
+        with:
+          path: .cache
+          key: upstream-sha-${{ runner.os }}-${{ steps.check_upstream.outputs.new_sha }}
