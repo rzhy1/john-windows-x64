@@ -14,7 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check openwall/john updates
-        if: ${{ steps.check_upstream.outputs.skip != 'true' }}
         id: check_upstream
         run: |
           mkdir -p .cache
