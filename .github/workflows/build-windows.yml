@@ -1,4 +1,4 @@
-name: Cross-compile John for Windows
+name: John for Windows
 
 on:
   push:
