@@ -343,15 +343,20 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ env.JOHN_VERSION }}
-          name: John the Ripper ${{ env.JOHN_VERSION }} Windows Build
+          name: John the Ripper ${{ env.JOHN_VERSION }}
           allowUpdates: true
           artifacts: "john-windows-x64.zip"
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      # 3. 构建成功后，把 .cache（包含 last_sha）存为新的缓存
+      - name: Recreate .cache directory
+        if: ${{ steps.check_upstream.outputs.skip == 'false' }}
+        run: |
+          mkdir -p .cache
+          echo "${{ steps.check_upstream.outputs.new_sha }}" > .cache/last_sha
+          
       - name: Save last upstream SHA to cache
         if: ${{ steps.check_upstream.outputs.skip == 'false' }}
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: .cache
           key: upstream-sha-${{ runner.os }}-${{ steps.check_upstream.outputs.new_sha }}
