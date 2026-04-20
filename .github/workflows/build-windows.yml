@@ -1,4 +1,4 @@
-name: John for Windows
+name: John the Ripper 
 
 on:
   push:
@@ -19,7 +19,7 @@ env:
   FORCE_BUILD: ${{ github.event.inputs.force || '0' }}
 
 jobs:
-  build-windows:
+  John-for-Windows:
     runs-on: ubuntu-latest
     steps:
       # 1. 尝试恢复最近一次保存的 .cache
