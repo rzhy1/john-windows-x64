@@ -254,7 +254,7 @@ jobs:
                       -I/usr/local/mingw-zlib/include \
                       -I/usr/local/mingw-bzip2/include \
                       -I/usr/x86_64-w64-mingw32/include" \
-            CFLAGS="-Ofast -march=tigerlake -funroll-loops -g0 -ffunction-sections -fdata-sections" \
+            CFLAGS="-Ofast -march=x86-64-v3 -funroll-loops -g0 -ffunction-sections -fdata-sections" \
             LDFLAGS="-static \
                      -static-libgcc \
                      -static-libstdc++ \
