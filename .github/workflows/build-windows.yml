@@ -331,9 +331,9 @@ jobs:
         if: ${{ steps.check_upstream.outputs.skip != 'true' }}
         run: |
           # 提取 check_upstream 中生成的 new_sha 前10位
-          SHORT_SHA=$(echo "${{ steps.check_upstream.outputs.new_sha }}" | cut -c 1-10)
+          SHORT_SHA=$(echo "${{ steps.check_upstream.outputs.new_sha }}" | cut -c 1-5)
           # 拼接形成诸如 1.9.0-jumbo-1+bleeding-f514ece8ec 的字符串
-          VERSION="1.9.0-jumbo-1+bleeding-${SHORT_SHA}"
+          VERSION="1.9.0-jumbo-1+$(date +%Y%m%d)-${SHORT_SHA}"
           echo "JOHN_VERSION=${VERSION}" >> $GITHUB_ENV
           echo "Generated version: ${VERSION}"
 
