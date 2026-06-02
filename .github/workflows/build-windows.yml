@@ -231,6 +231,16 @@ jobs:
           # 验证安装
           ls -la /usr/local/mingw-openssl/include/openssl/
           ls -la /usr/local/mingw-openssl/lib/
+          
+      - name: Get version number
+        if: ${{ steps.check_upstream.outputs.skip != 'true' }}
+        run: |
+          # 提取 check_upstream 中生成的 new_sha 前10位
+          SHORT_SHA=$(echo "${{ steps.check_upstream.outputs.new_sha }}" | cut -c 1-5)
+          # 拼接形成诸如 1.9.0-jumbo-1+bleeding-f514ece8ec 的字符串
+          VERSION="1.9.0-jumbo-1+$(date +%Y%m%d)-${SHORT_SHA}"
+          echo "JOHN_VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "Generated version: ${VERSION}"
 
       - name: Configure for John the Ripper
         if: ${{ steps.check_upstream.outputs.skip != 'true' }}
@@ -239,7 +249,7 @@ jobs:
           sed -i '1i #include <stdio.h>' Win32-dlfcn-port.h
           sed -i 's/<dlfcn.h>/"Win32-dlfcn-port.h"/g' opencl_dynamic_loader.c
           sed -i 's/fchdir([^)]*)/(-1)/g' opencl_common.c
-          
+          export JOHN_VERSION="${{ env.JOHN_VERSION }}"
           export ac_cv_header_dlfcn_h=no
           export ac_cv_func_dlopen=no
           export ac_cv_func_fchdir=no
@@ -326,18 +336,6 @@ jobs:
           sudo apt-get install -y binutils-mingw-w64-x86-64
           x86_64-w64-mingw32-objdump -p john-windows-x64/run/john.exe | grep "DLL Name" || true
 
-      # === 生成带 SHA 标识的版本号 ===
-      - name: Get version number
-        if: ${{ steps.check_upstream.outputs.skip != 'true' }}
-        run: |
-          # 提取 check_upstream 中生成的 new_sha 前10位
-          SHORT_SHA=$(echo "${{ steps.check_upstream.outputs.new_sha }}" | cut -c 1-5)
-          # 拼接形成诸如 1.9.0-jumbo-1+bleeding-f514ece8ec 的字符串
-          VERSION="1.9.0-jumbo-1+$(date +%Y%m%d)-${SHORT_SHA}"
-          echo "JOHN_VERSION=${VERSION}" >> $GITHUB_ENV
-          echo "Generated version: ${VERSION}"
-
-      # === 创建并上传 Release ===
       - name: Create Release
         if: ${{ steps.check_upstream.outputs.skip != 'true' }}
         uses: ncipollo/release-action@v1
