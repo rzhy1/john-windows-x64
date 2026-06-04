@@ -239,7 +239,7 @@ jobs:
           JOHN_VERSION="1.9.0-jumbo-1($(date +%Y%m%d))"
           echo "JOHN_VERSION=${JOHN_VERSION}" >> $GITHUB_ENV
           sed -i 's|^//#define JTR_RELEASE_BUILD 1|#define JTR_RELEASE_BUILD 1|' params.h
-          sed -i "s/^PACKAGE_VERSION='.*'/PACKAGE_VERSION='${JOHN_VERSION}'/" ../configure
+          sed -i "s/^PACKAGE_VERSION='.*'/PACKAGE_VERSION='${JOHN_VERSION}'/" configure
           sed -i "s/^#define JOHN_VERSION.*/#define JOHN_VERSION \"${JOHN_VERSION}\"/" params.h
           sed -i 's/^#define JUMBO_POSTFIX.*/#define JUMBO_POSTFIX ""/' params.h
                 
