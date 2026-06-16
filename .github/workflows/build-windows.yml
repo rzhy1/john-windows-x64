@@ -20,7 +20,7 @@ env:
 
 jobs:
   John-for-Windows:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       # 1. 尝试恢复最近一次保存的 .cache
       - name: Restore last upstream SHA cache
