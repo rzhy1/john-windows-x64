@@ -71,7 +71,7 @@ jobs:
 
       - name: Checkout John the Ripper source
         if: ${{ steps.check_upstream.outputs.skip != 'true' }}
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: openwall/john
           ref: bleeding-jumbo
