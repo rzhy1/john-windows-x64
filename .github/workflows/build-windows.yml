@@ -23,29 +23,26 @@ jobs:
     runs-on: ubuntu-26.04
     concurrency:
       group: john-build-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: false
     steps:
-      # 1. 尝试恢复最近一次保存的 .cache
-      - name: Restore last upstream SHA cache
-        uses: actions/cache@v5
+      # ---------- 1. 恢复缓存（固定键） ----------
+      - name: Restore upstream SHA cache
+        uses: actions/cache@v6
         with:
           path: .cache
-          key: upstream-sha-${{ runner.os }}-${{ github.run_id }}
-          restore-keys: |
-            upstream-sha-${{ runner.os }}-
-
+          key: john-upstream-sha
+          
       # 2. 检查上游 bleeding-jumbo 分支是否有更新
       - id: check_upstream
         name: Check upstream changes
         shell: bash
         run: |
           mkdir -p .cache
-          
-          # 获取上游 john 仓库 bleeding-jumbo 分支最新 commit SHA (不克隆直接查询)
+          # 获取上游 john 仓库 bleeding-jumbo 分支最新 commit SHA
           NEW_SHA=$(git ls-remote https://github.com/openwall/john.git refs/heads/bleeding-jumbo | awk '{print $1}')
           echo "new_sha=$NEW_SHA" >> $GITHUB_OUTPUT
           echo "Found upstream NEW_SHA=$NEW_SHA"
-          
+
           if [ -f .cache/last_sha ]; then
             OLD_SHA=$(cat .cache/last_sha)
           else
@@ -53,7 +50,7 @@ jobs:
           fi
           echo "old_sha=$OLD_SHA" >> $GITHUB_OUTPUT
           echo "Found cached OLD_SHA=$OLD_SHA"
-          
+
           if [ "${FORCE_BUILD}" = "1" ]; then
             echo "FORCE_BUILD=1 -> 强制编译"
             echo "skip=false" >> $GITHUB_OUTPUT
@@ -351,10 +348,10 @@ jobs:
           mkdir -p .cache
           echo "${{ steps.check_upstream.outputs.new_sha }}" > .cache/last_sha
           
-      - name: Save last upstream SHA to cache
-        if: ${{ steps.check_upstream.outputs.skip == 'false' }}
-        uses: actions/cache/save@v5
+      - name: Save upstream SHA cache
+        if: always() && steps.check_upstream.outputs.skip == 'false'
+        uses: actions/cache@v6
         with:
           path: .cache
-          key: upstream-sha-${{ runner.os }}-${{ steps.check_upstream.outputs.new_sha }}
+          key: john-upstream-sha
         continue-on-error: true
