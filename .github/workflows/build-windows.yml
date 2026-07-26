@@ -21,6 +21,9 @@ env:
 jobs:
   John-for-Windows:
     runs-on: ubuntu-26.04
+    concurrency:
+      group: john-build-${{ github.ref }}
+      cancel-in-progress: true
     steps:
       # 1. 尝试恢复最近一次保存的 .cache
       - name: Restore last upstream SHA cache
@@ -354,3 +357,4 @@ jobs:
         with:
           path: .cache
           key: upstream-sha-${{ runner.os }}-${{ steps.check_upstream.outputs.new_sha }}
+        continue-on-error: true
