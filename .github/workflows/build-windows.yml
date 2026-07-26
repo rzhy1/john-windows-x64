@@ -15,7 +15,6 @@ on:
     - cron: "0 0 * * *"
 
 env:
-  # workflow_dispatch 时可通过界面输入 force=1 强制编译
   FORCE_BUILD: ${{ github.event.inputs.force || '0' }}
 
 jobs:
